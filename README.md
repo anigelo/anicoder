@@ -1,1 +1,3 @@
 # anicoder
+
+Requires `ffmpeg` installed

@@ -1,3 +1,4 @@
+use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
 use walkdir::WalkDir;
@@ -8,21 +9,26 @@ pub fn encode_to_h264(path: PathBuf) {
     let episodes = get_episodes(path);
     for episode in episodes {
         let new_path = episode.with_file_name(
-          format!("transcoding {}.mp4", episode.file_stem().unwrap().to_string_lossy())
+          format!("transcoding {}.mkv", episode.file_stem().unwrap().to_string_lossy())
         );
-        println!("Temp: {:?}, Rename: {:?}", new_path, episode.with_extension("mp4"));
+
         Command::new("ffmpeg")
             .arg("-i").arg(&episode)
             .arg("-preset").arg("slow")
             .arg("-crf").arg("23")
-            .arg("-c:a").arg("copy")
+            .arg("-c:a").arg("aac")
+            .arg("-c:s").arg("copy")
             .arg(&new_path)
             .spawn().expect("ffmpeg failed")
             .wait().expect("ffmpeg failed");
-        match std::fs::remove_file(&episode) {
-            Err(e) => eprintln!("Could not remove '{:?}', Error: {}", episode, e),
-            Ok(()) => if let Err(e) = std::fs::rename(new_path, episode.with_extension("mp4")) {
-                eprintln!("Could not rename '{:?}', Error: {}", episode, e)
+
+        let transcoded_metadata = fs::metadata(&new_path);
+        if transcoded_metadata.is_ok() && transcoded_metadata.unwrap().len() > 0 {
+            match fs::remove_file(&episode) {
+                Err(e) => eprintln!("Could not remove '{:?}', Error: {}", episode, e),
+                Ok(()) => if let Err(e) = fs::rename(new_path, episode.with_extension("mkv")) {
+                    eprintln!("Could not rename '{:?}', Error: {}", episode, e)
+                }
             }
         }
     }

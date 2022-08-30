@@ -16,6 +16,7 @@ pub fn encode_to_h264(path: PathBuf) {
             .arg("-i").arg(&episode)
             .arg("-preset").arg("slow")
             .arg("-crf").arg("23")
+            .arg("-pix_fmt").arg("yuv420p")
             .arg("-c:a").arg("aac")
             .arg("-c:s").arg("copy")
             .arg(&new_path)
